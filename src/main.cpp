@@ -33,6 +33,7 @@ std::vector<double> dp = {0.1,0.001,0.0001};
 double tol = 0.001;
 int tunning_iteration = 0;
 int tunning_iteration_thres = 2;
+int target_speed = 30;
 
 int main()
 {
@@ -45,8 +46,6 @@ int main()
 
   PID pidSpeed;
   pidSpeed.Init(0.1, 0.002,0);
-  //set point of 30 mph
-  // pidSpeed.SetPoint(30);
 
   h.onMessage([&pid, &pidSpeed](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -91,7 +90,7 @@ int main()
             steer_value = - 1.0;
           }
 
-          pidSpeed.UpdateError(speed-30);
+          pidSpeed.UpdateError(speed-target_speed);
           double throttle = pidSpeed.CtrlQuantity();
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value <<
@@ -99,8 +98,8 @@ int main()
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
-          // msgJson["throttle"] = throttle;
-          msgJson["throttle"] = 0.3;
+          msgJson["throttle"] = throttle;
+          // msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
