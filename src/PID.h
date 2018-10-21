@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <limits>
+#include <ctime>
 
 class PID {
 public:
@@ -55,12 +56,16 @@ public:
   */
   double CtrlQuantity();
 
+    //track time
+  time_t time_stamp;
 
   /*
   * Twiddle auto tunning
   */
+
+  void setTwiddlePara(std::vector<double> _dp, double tol);
   std::vector<double> best_p = {0,0,0};
-  std::vector<double> dp = {0.1,0.001,0.0001};
+  std::vector<double> dp = {0.1,0.01,0.001};
   double best_err = std::numeric_limits<double>::max();
   double tol = 0.001;
   int tunning_state = 0;

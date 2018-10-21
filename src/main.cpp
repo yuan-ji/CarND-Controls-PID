@@ -28,17 +28,20 @@ std::string hasData(std::string s) {
   return "";
 }
 
+bool auto_tunning = true;
+std::vector<double> dp = {0.1,0.001,0.0001};
+double tol = 0.001;
 int tunning_iteration = 0;
+int tunning_iteration_thres = 2;
+
 int main()
 {
   uWS::Hub h;
 
   PID pid;
-  // TODO: Initialize the pid variable.
-  double kp = 0.11;
-  double ki = 0.004;
-  double kd = 0.0008;
-  pid.Init(kp, ki, kd);
+  pid.Init(0.1,0.004,0.0008);
+  // pid.Init(0,0,0);
+  pid.setTwiddlePara(dp, tol);
 
   PID pidSpeed;
   pidSpeed.Init(0.1, 0.002,0);
@@ -59,7 +62,7 @@ int main()
           // j[1] is the data JSON object
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
-          double angle = std::stod(j[1]["steering_angle"].get<std::string>());
+          // double angle = std::stod(j[1]["steering_angle"].get<std::string>());
           double steer_value;
           /*
           * TODO: Calcuate steering value here, remember the steering value is
@@ -67,23 +70,26 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-         std::cout << "tunning_iteration " << tunning_iteration << std::endl;
-          if (tunning_iteration < 20 ) {
-            pid.UpdateError(cte);
-            tunning_iteration++;
-          } else {
-            tunning_iteration = 0;
-            if(pid.Twiddle()) {
+
+         if(auto_tunning) {
+            if (tunning_iteration < tunning_iteration_thres ) {
+              pid.UpdateError(cte);
+              tunning_iteration++;
+            } else {
+              tunning_iteration = 0;
+              pid.Twiddle();
               pid.SetPIDWithTwiddlePara();
             }
-          }
+         } else {
+           pid.UpdateError(cte);
+         }
 
           steer_value = pid.CtrlQuantity();
-          // if (steer_value >= 1){
-          //  steer_value = 1;
-          // } else if(steer_value <= -1){
-          //  steer_value = -1;
-          // }
+          if (steer_value >= 1.0){
+            steer_value =  1.0;
+          } else if(steer_value <= - 1.0){
+            steer_value = - 1.0;
+          }
 
           pidSpeed.UpdateError(speed-30);
           double throttle = pidSpeed.CtrlQuantity();

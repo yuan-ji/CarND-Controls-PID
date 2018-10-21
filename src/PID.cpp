@@ -28,35 +28,59 @@ void PID::Init(double Kp, double Ki, double Kd) {
 }
 
 void PID::UpdateError(double cte) {
-    d_error = cte - p_error;
-    i_error += cte;
+    if (p_error == 0) {
+        time_stamp = clock();
+    }
+
+    time_t current_time = clock();
+
+    double delta_t = (double(current_time - time_stamp) / CLOCKS_PER_SEC);
+    time_stamp = current_time;
+
+    if (delta_t > 0) {
+        d_error = (cte - p_error) / delta_t;
+    } else {
+        d_error = 0;
+    }
     p_error = cte;
-    error += cte * cte;
+    i_error += cte * delta_t;
+    if(n >= 20) {
+        error += cte * cte;
+    }
     n++;
 }
 
 double PID::TotalError() {
-    if (n == 0) {
-        return std::numeric_limits<long int>::max();
-    }
-    return (error / n);
+    // if (n == 0) {
+    //     return std::numeric_limits<long int>::max();
+    // }
+    // return (error / n);
+    return error;
 }
 
 double PID::CtrlQuantity() {
-    return -((Kp * p_error) + (Kd * d_error) + (Ki * i_error));
+    return -((Kp * p_error) + (Ki * i_error) + (Kd * d_error));
 }
 
+void PID::setTwiddlePara(std::vector<double> _dp, double _tol) {
+    this->dp = _dp;
+    tol = _tol;
+}
 bool PID::Twiddle() {
     double sum = std::accumulate(dp.begin(), dp.end(), 0.0);
     bool flag = true;
-    if (sum > tol) {
-        double err = this->TotalError();
+    bool run_flag = false;
+    double err;
+    while ((sum > tol) && (!run_flag)) {
         switch (tunning_state) {
             case 0:
                 best_p[tunning_index] += dp[tunning_index];
                 tunning_state = 1;
+                run_flag = true;
                 break;
             case 1:
+                err = this->TotalError();
+                std::cout << "err " << err << " best_err " << best_err << std::endl;
                 if (err < best_err) {
                     best_err = err;
                     dp[tunning_index] *= 1.1;
@@ -65,9 +89,12 @@ bool PID::Twiddle() {
                 } else {
                     best_p[tunning_index] -= 2 * dp[tunning_index];
                     tunning_state = 2;
+                    run_flag = true;
                 }
                 break;
             case 2:
+                err = this->TotalError();
+                std::cout << "err " << err << " best_err " << best_err << std::endl;
                 if (err < best_err) {
                     best_err = err;
                     dp[tunning_index] *= 1.1;
@@ -84,20 +111,19 @@ bool PID::Twiddle() {
         if (tunning_index > 2) {
             tunning_index = 0;
         }
-        flag = true;
-    } else {
-        flag = false;
-    }
 
-    std::cout << "tunning_index is " << tunning_index << " tunning_state "
-              << tunning_state << " flag is " << flag << std::endl;
-    return flag;
+        std::cout << "next tunning_index is " << tunning_index << " next tunning_state "
+                  << tunning_state << std::endl;
+    }
 }
 
 void PID::SetPIDWithTwiddlePara(void) {
     std::cout << "PID " << best_p[0] << " " << best_p[1] << " " << best_p[2]
               << "\n";
-    this->Init(best_p[0], best_p[1], best_p[2]);
+    // this->Init(best_p[0], best_p[1], best_p[2]);
+    Kp = best_p[0];
+    Ki = best_p[1];
+    Kd = best_p[2];
 }
 
 // def twiddle(tol=0.2):
