@@ -28,14 +28,24 @@ std::string hasData(std::string s) {
   return "";
 }
 
+int tunning_iteration = 0;
 int main()
 {
   uWS::Hub h;
 
   PID pid;
   // TODO: Initialize the pid variable.
+  double kp = 0.11;
+  double ki = 0.004;
+  double kd = 0.0008;
+  pid.Init(kp, ki, kd);
 
-  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  PID pidSpeed;
+  pidSpeed.Init(0.1, 0.002,0);
+  //set point of 30 mph
+  // pidSpeed.SetPoint(30);
+
+  h.onMessage([&pid, &pidSpeed](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -57,12 +67,33 @@ int main()
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-          
+         std::cout << "tunning_iteration " << tunning_iteration << std::endl;
+          if (tunning_iteration < 20 ) {
+            pid.UpdateError(cte);
+            tunning_iteration++;
+          } else {
+            tunning_iteration = 0;
+            if(pid.Twiddle()) {
+              pid.SetPIDWithTwiddlePara();
+            }
+          }
+
+          steer_value = pid.CtrlQuantity();
+          // if (steer_value >= 1){
+          //  steer_value = 1;
+          // } else if(steer_value <= -1){
+          //  steer_value = -1;
+          // }
+
+          pidSpeed.UpdateError(speed-30);
+          double throttle = pidSpeed.CtrlQuantity();
           // DEBUG
-          std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+          std::cout << "CTE: " << cte << " Steering Value: " << steer_value <<
+          " Throttle: " << throttle <<std::endl;
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
+          // msgJson["throttle"] = throttle;
           msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
