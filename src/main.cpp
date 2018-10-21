@@ -40,7 +40,7 @@ int main()
   uWS::Hub h;
 
   PID pid;
-  pid.Init(0.1,0.004,0.0008);
+  pid.Init(0.1,0.005,0.0007);
   pid.setTwiddlePara(dp, tol,tunning_iteration_thres);
 
   PID pidSpeed;

@@ -127,9 +127,6 @@ void PID::SetPIDWithTwiddlePara(double cte) {
         this->UpdateError(cte);
     } else {
         this->Twiddle();
-        p_error = 0.0;
-        i_error = 0.0;
-        d_error = 0.0;
         error = 0.0;
         n = 0;
     }
