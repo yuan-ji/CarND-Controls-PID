@@ -32,7 +32,7 @@ bool auto_tunning = true;
 std::vector<double> dp = {0.1,0.001,0.0001};
 double tol = 0.001;
 int tunning_iteration = 0;
-int tunning_iteration_thres = 2;
+int tunning_iteration_thres = 40;
 int target_speed = 30;
 
 int main()
@@ -42,7 +42,7 @@ int main()
   PID pid;
   pid.Init(0.1,0.004,0.0008);
   // pid.Init(0,0,0);
-  pid.setTwiddlePara(dp, tol);
+  pid.setTwiddlePara(dp, tol,tunning_iteration_thres);
 
   PID pidSpeed;
   pidSpeed.Init(0.1, 0.002,0);
