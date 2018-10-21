@@ -75,7 +75,7 @@ class PID {
      * Calculate the PID params
      */
     void Twiddle(void);
-    void SetPIDWithTwiddlePara(void);
+    void SetPIDWithTwiddlePara(double cte);
 };
 
 #endif /* PID_H */

@@ -48,7 +48,7 @@ void PID::UpdateError(double cte) {
     }
     p_error = cte;
     i_error += cte * delta_t;
-    if(n >= (n_thres/2)) {
+    if (n >= (n_thres / 2)) {
         error += cte * cte;
     }
     n++;
@@ -83,7 +83,8 @@ void PID::Twiddle(void) {
                 break;
             case 1:
                 err = this->TotalError();
-                std::cout << "err " << err << " best_err " << best_err << std::endl;
+                std::cout << "err " << err << " best_err " << best_err
+                          << std::endl;
                 if (err < best_err) {
                     best_err = err;
                     dp[tunning_index] *= 1.1;
@@ -97,7 +98,8 @@ void PID::Twiddle(void) {
                 break;
             case 2:
                 err = this->TotalError();
-                std::cout << "err " << err << " best_err " << best_err << std::endl;
+                std::cout << "err " << err << " best_err " << best_err
+                          << std::endl;
                 if (err < best_err) {
                     best_err = err;
                     dp[tunning_index] *= 1.1;
@@ -115,24 +117,26 @@ void PID::Twiddle(void) {
             tunning_index = 0;
         }
 
-        std::cout << "next tunning_index is " << tunning_index << " next tunning_state "
-                  << tunning_state << std::endl;
+        std::cout << "next tunning_index is " << tunning_index
+                  << " next tunning_state " << tunning_state << std::endl;
     }
 }
 
-void PID::SetPIDWithTwiddlePara(void) {
-    std::cout << "PID " << best_p[0] << " " << best_p[1] << " " << best_p[2]
-              << "\n";
-    // this->Init(best_p[0], best_p[1], best_p[2]);
-    Kp = best_p[0];
-    Ki = best_p[1];
-    Kd = best_p[2];
-
-    if(n >= n_thres) {
-        this->p_error = 0.0;
-        this->i_error = 0.0;
-        this->d_error = 0.0;
+void PID::SetPIDWithTwiddlePara(double cte) {
+    if (n < n_thres) {
+        this->UpdateError(cte);
+    } else {
+        this->Twiddle();
+        p_error = 0.0;
+        i_error = 0.0;
+        d_error = 0.0;
         error = 0.0;
         n = 0;
     }
+
+    std::cout << "PID " << best_p[0] << " " << best_p[1] << " " << best_p[2]
+              << "\n";
+    Kp = best_p[0];
+    Ki = best_p[1];
+    Kd = best_p[2];
 }

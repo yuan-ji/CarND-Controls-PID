@@ -28,7 +28,7 @@ std::string hasData(std::string s) {
   return "";
 }
 
-bool auto_tunning = true;
+bool auto_tunning = false;
 std::vector<double> dp = {0.1,0.001,0.0001};
 double tol = 0.001;
 int tunning_iteration = 0;
@@ -41,7 +41,6 @@ int main()
 
   PID pid;
   pid.Init(0.1,0.004,0.0008);
-  // pid.Init(0,0,0);
   pid.setTwiddlePara(dp, tol,tunning_iteration_thres);
 
   PID pidSpeed;
@@ -71,14 +70,7 @@ int main()
           */
 
          if(auto_tunning) {
-            if (tunning_iteration < tunning_iteration_thres ) {
-              pid.UpdateError(cte);
-              tunning_iteration++;
-            } else {
-              tunning_iteration = 0;
-              pid.Twiddle();
-              pid.SetPIDWithTwiddlePara();
-            }
+           pid.SetPIDWithTwiddlePara(cte);
          } else {
            pid.UpdateError(cte);
          }
